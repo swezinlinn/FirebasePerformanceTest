@@ -18,10 +18,13 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import android.support.v7.widget.LinearLayoutManager
 import android.widget.ImageView
-import android.widget.Toast
 import butterknife.OnClick
 import com.bumptech.glide.Glide
 import com.google.firebase.perf.metrics.AddTrace
+import java.io.DataOutputStream
+import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.URL
 
 
 class MainActivity : AppCompatActivity() {
@@ -74,10 +77,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getUsers() {
+        val metric = FirebasePerformance.getInstance().newHttpMetric("https://api.github.com/search/users?q=rokano",
+            FirebasePerformance.HttpMethod.GET)
+
         val retrofit: Retrofit = Retrofit.Builder()
             .baseUrl("https://api.github.com/search/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
+
+        metric.start()
 
         val api = retrofit.create(Api::class.java)
         val call = api.users
@@ -85,18 +93,25 @@ class MainActivity : AppCompatActivity() {
         trace.start()
         call.enqueue(object : Callback<UserList>{
             override fun onFailure(call: Call<UserList>, t: Throwable) {
-                trace.incrementMetric("load_user_list_on_Failure",1)
+
             }
 
             override fun onResponse(call: Call<UserList>, response: Response<UserList>) {
+                metric.setHttpResponseCode(response.code())
                 if(response.isSuccessful){
                     trace.incrementMetric("load_user_list_on_success",1)
+                    d(TAG,"on success")
+                    metric.setRequestPayloadSize(response.body()!!.users!!.size.toLong())
                     for(i in 0 until response.body()!!.users!!.size){
                         phvUser.addView(ViewGenerator(response.body()!!.users!![i]) )
                     }
+                }else{
+                    trace.incrementMetric("load_user_list_on_Failure",1)
+                    d(TAG,"on failure")
                 }
             }
         })
+        metric.stop()
         trace.stop()
     }
 }
