@@ -20,6 +20,7 @@ import android.support.v7.widget.LinearLayoutManager
 import android.widget.ImageView
 import butterknife.OnClick
 import com.bumptech.glide.Glide
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.perf.metrics.AddTrace
 import java.io.DataOutputStream
 import java.io.IOException
@@ -77,7 +78,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getUsers() {
-        val metric = FirebasePerformance.getInstance().newHttpMetric("https://api.github.com/search/users?q=rokano",
+        val metric = FirebasePerformance.getInstance().newHttpMetric("https://api.github.com/",
             FirebasePerformance.HttpMethod.GET)
 
         val retrofit: Retrofit = Retrofit.Builder()
@@ -86,7 +87,10 @@ class MainActivity : AppCompatActivity() {
             .build()
 
         metric.start()
+        val database = FirebaseDatabase.getInstance()
+        val myRef = database.getReference("message")
 
+        myRef.setValue("Hello, World!")
         val api = retrofit.create(Api::class.java)
         val call = api.users
         trace = FirebasePerformance.getInstance().newTrace("load_user_list")
