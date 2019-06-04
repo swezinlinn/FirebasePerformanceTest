@@ -87,10 +87,7 @@ class MainActivity : AppCompatActivity() {
             .build()
 
         metric.start()
-        val database = FirebaseDatabase.getInstance()
-        val myRef = database.getReference("message")
 
-        myRef.setValue("Hello, World!")
         val api = retrofit.create(Api::class.java)
         val call = api.users
         trace = FirebasePerformance.getInstance().newTrace("load_user_list")
